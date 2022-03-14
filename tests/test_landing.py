@@ -23,8 +23,6 @@ def test_forward(shape, momentum, safe_step):
 def test_convergence():
     p = 3
     param = geoopt.ManifoldParameter(torch.randn(p, p), manifold=geoopt.Stiefel())
-    with torch.no_grad():
-        param.proj_()
     optimizer = LandingSGD((param,), lr=.1)
     n_epochs = 100
     # Trace maximization: should end up in identity

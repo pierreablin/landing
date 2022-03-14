@@ -13,7 +13,9 @@ __all__ = ["LandingSGD"]
 def _check_orthogonal(param):
     if not hasattr(param, "manifold"):
         raise TypeError("Parameter should be a geoopt parameter")
-    if not isinstance(param.manifold, geoopt.manifolds.stiefel.CanonicalStiefel):
+    if not isinstance(
+        param.manifold, geoopt.manifolds.stiefel.CanonicalStiefel
+    ) and not isinstance(param.manifold, geoopt.manifolds.stiefel.EuclideanStiefel):
         raise TypeError("Parameters should be on the Stiefel manifold")
     *_, p, q = param.shape
     if p != q:
@@ -106,7 +108,7 @@ class LandingSGD(OptimMixin, torch.optim.Optimizer):
         weight_decay=0,
         nesterov=False,
         stabilize=None,
-        lambda_regul=1.0,
+        lambda_regul=1.,
         safe_step=0.5,
         check_type=True,
     ):
@@ -128,6 +130,9 @@ class LandingSGD(OptimMixin, torch.optim.Optimizer):
             safe_step=safe_step,
             check_type=check_type,
         )
+        for param in params:
+            with torch.no_grad():
+                param.proj_()
         if nesterov and (momentum <= 0 or dampening != 0):
             raise ValueError("Nesterov momentum requires a momentum and zero dampening")
         super().__init__(params, defaults, stabilize=stabilize)
