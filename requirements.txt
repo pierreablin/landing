@@ -1,0 +1,2 @@
+pytorch >= 1.10
+geoopt >= 0.4
