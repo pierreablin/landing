@@ -16,4 +16,6 @@ You can find the paper [here](https://arxiv.org/pdf/2102.07432.pdf).
 
 If you use this code please cite:
 
-    Ablin, Pierre, and Gabriel Peyré. "Fast and accurate optimization on the orthogonal manifold without retraction." AISTATS 2022
+    Pierre Ablin and Gabriel Peyré.
+    "Fast and accurate optimization on the orthogonal manifold without retraction."
+    AISTATS 2022
