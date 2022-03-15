@@ -10,7 +10,14 @@ You can find the paper [here](https://arxiv.org/pdf/2102.07432.pdf).
 
 ## Installation
 
+To install the package, simply run
+```
+pip install git+https://github.com/pierreablin/landing.git
+```
 
+## Use
+
+The package ships one optimizer, `LandingSGD`, that mimics geoopt's `RiemannianSGD`. It is a pytorch optimizer.
 
 ## Cite
 
