@@ -25,27 +25,26 @@ def _check_orthogonal(param):
         )
 
 
-def _safe_step_size(d, a, lbda, eps):
+def _safe_step_size(d, g, lambda_regul, eps_d):
     """Compute the safe step size
-
     Parameters
     ----------
     d : float
         The distance to the manifold
-    a : float
-        The norm of the relative gradient
-    lbda : float
-        The hyper-parameter lambda of the landing algorithm
-    eps : float
+    g : float
+        The norm of the landing update
+    lambda_regul : float
+        The regularisation parameter
+    eps_d : float
         The tolerance: the maximal allowed distance to the manifold
     Return
     ------
     sol : float
         The maximal step-size one can take
     """
-    alpha = 2 * (lbda * d - a * d - 2 * lbda * d)
-    beta = a ** 2 + lbda ** 2 * d ** 3 + 2 * lbda * a * d ** 2 + a ** 2 * d
-    sol = (alpha + torch.sqrt(alpha ** 2 + 4 * beta * (eps - d))) / 2 / beta
+    beta = lambda_regul * d * (d-1)
+    alpha = g**2
+    sol = (- beta + torch.sqrt(beta**2 - alpha * (d - eps_d)))/alpha
     return sol
 
 
@@ -57,8 +56,8 @@ def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
     landing_field = torch.matmul(grad + lambda_regul * distance, point)
     if safe_step:
         d = torch.norm(distance, dim=(-1, -2))
-        a = torch.norm(grad, dim=(-1, -2))
-        max_step = _safe_step_size(d, a, lambda_regul, safe_step)
+        g = torch.norm(landing_field, dim=(-1, -2))
+        max_step = _safe_step_size(d, g, lambda_regul, safe_step)
         # One step per orthogonal matrix
         step_size_shape = list(point.shape)
         step_size_shape[-1] = 1

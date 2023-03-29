@@ -20,6 +20,24 @@ def test_forward(shape, momentum, safe_step):
     optimizer.step()
 
 
+@pytest.mark.parametrize("safe_step", [0.3, 0.1])
+def test_forward(safe_step, n_reps=10):
+    p = 3
+    shape = (p, p)
+    for _ in range(n_reps):
+        param = geoopt.ManifoldParameter(torch.randn(*shape), manifold=geoopt.Stiefel())
+        param.requires_grad = False
+        param.proj_()
+        param.requires_grad = True
+        optimizer = LandingSGD((param,), lr=0.1, safe_step=safe_step)
+        optimizer.zero_grad()
+        loss = (param ** 2).sum()
+        loss.backward()
+        optimizer.step()
+        orth_error = torch.norm(param.mm(param.t()) - torch.eye(p)) ** 2
+        assert orth_error < safe_step
+
+
 def test_convergence():
     p = 3
     param = geoopt.ManifoldParameter(torch.randn(p, p), manifold=geoopt.Stiefel())
