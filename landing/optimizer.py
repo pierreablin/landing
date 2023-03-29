@@ -13,9 +13,7 @@ def _check_orthogonal(param):
         raise TypeError("Parameter should be a geoopt parameter")
     if not isinstance(
         param.manifold, geoopt.manifolds.stiefel.CanonicalStiefel
-    ) and not isinstance(
-        param.manifold, geoopt.manifolds.stiefel.EuclideanStiefel
-    ):
+    ) and not isinstance(param.manifold, geoopt.manifolds.stiefel.EuclideanStiefel):
         raise TypeError("Parameters should be on the Stiefel manifold")
     *_, p, q = param.shape
     if p != q:
@@ -42,10 +40,10 @@ def _safe_step_size(d, g, lambda_regul, eps_d):
     sol : float
         The maximal step-size one can take
     """
-    beta = lambda_regul * d * (d-1)
+    beta = lambda_regul * d * (d - 1)
     alpha = g**2
-    sol = (- beta + torch.sqrt(beta**2 - alpha * (d - eps_d)))/alpha
-    return sol
+    sol = (-beta + torch.sqrt(beta**2 + alpha * (eps_d - d))) / alpha
+    return min(sol, 1.0 / (2 * lambda_regul))
 
 
 def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
@@ -62,9 +60,7 @@ def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
         step_size_shape = list(point.shape)
         step_size_shape[-1] = 1
         step_size_shape[-2] = 1
-        step_size = torch.clip(max_step, max=learning_rate).view(
-            *step_size_shape
-        )
+        step_size = torch.clip(max_step, max=learning_rate).view(*step_size_shape)
     else:
         step_size = learning_rate
     return point - step_size * landing_field
@@ -121,13 +117,9 @@ class LandingSGD(OptimMixin, torch.optim.Optimizer):
         if momentum < 0.0:
             raise ValueError("Invalid momentum value: {}".format(momentum))
         if weight_decay < 0.0:
-            raise ValueError(
-                "Invalid weight_decay value: {}".format(weight_decay)
-            )
+            raise ValueError("Invalid weight_decay value: {}".format(weight_decay))
         if lambda_regul < 0.0:
-            raise ValueError(
-                "Invalid lambda_regul value: {}".format(lambda_regul)
-            )
+            raise ValueError("Invalid lambda_regul value: {}".format(lambda_regul))
         defaults = dict(
             lr=lr,
             momentum=momentum,
@@ -142,9 +134,7 @@ class LandingSGD(OptimMixin, torch.optim.Optimizer):
             with torch.no_grad():
                 param.proj_()
         if nesterov and (momentum <= 0 or dampening != 0):
-            raise ValueError(
-                "Nesterov momentum requires a momentum and zero dampening"
-            )
+            raise ValueError("Nesterov momentum requires a momentum and zero dampening")
         super().__init__(params, defaults, stabilize=stabilize)
 
     def step(self, closure=None):
@@ -189,9 +179,7 @@ class LandingSGD(OptimMixin, torch.optim.Optimizer):
                     grad /= 2.0
                     if momentum > 0:
                         momentum_buffer = state["momentum_buffer"]
-                        momentum_buffer.mul_(momentum).add_(
-                            grad, alpha=1 - dampening
-                        )
+                        momentum_buffer.mul_(momentum).add_(grad, alpha=1 - dampening)
                         if nesterov:
                             grad = grad.add_(momentum_buffer, alpha=momentum)
                         else:

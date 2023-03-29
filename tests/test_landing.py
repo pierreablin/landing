@@ -20,9 +20,10 @@ def test_forward(shape, momentum, safe_step):
     optimizer.step()
 
 
-@pytest.mark.parametrize("safe_step", [0.3, 0.1])
-def test_forward(safe_step, n_reps=100):
-    p = 3
+@pytest.mark.parametrize("safe_step", [0.3, 0.1, 1e-3])
+@pytest.mark.parametrize("lbda", [0.1, 1, 10])
+def test_safe(safe_step, lbda, n_reps=10, n_iters=100):
+    p = 2
     shape = (p, p)
     for _ in range(n_reps):
         param = geoopt.ManifoldParameter(torch.randn(*shape), manifold=geoopt.Stiefel())
@@ -30,18 +31,19 @@ def test_forward(safe_step, n_reps=100):
         param.proj_()
         param.requires_grad = True
         target = torch.randn(*shape)
-        optimizer = LandingSGD((param,), lr=1000, safe_step=safe_step)
-        optimizer.zero_grad()
-        loss = (param * target).sum()
-        loss.backward()
-        optimizer.step()
-        orth_error = torch.norm(param.mm(param.t()) - torch.eye(p)) ** 2
-        assert orth_error < safe_step
+        optimizer = LandingSGD((param,), lr=1e5, safe_step=safe_step, lambda_regul=lbda)
+        for n_iter in range(n_iters):
+            optimizer.zero_grad()
+            loss = (param * target).sum()
+            loss.backward()
+            optimizer.step()
+            orth_error = torch.norm(param.mm(param.t()) - torch.eye(p))
+            assert orth_error < safe_step
 
 
 def test_convergence():
     p = 3
-    param = geoopt.ManifoldParameter(torch.randn(p, p), manifold=geoopt.Stiefel())
+    param = geoopt.ManifoldParameter(torch.eye(p) + 0.1 * torch.randn(p, p), manifold=geoopt.Stiefel())
     optimizer = LandingSGD((param,), lr=.1)
     n_epochs = 100
     # Trace maximization: should end up in identity
