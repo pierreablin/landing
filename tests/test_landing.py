@@ -26,8 +26,9 @@ def test_forward(shape, momentum, safe_step):
 
 @pytest.mark.parametrize("safe_step", [0.3, 0.1, 1e-2])
 @pytest.mark.parametrize("lbda", [0.1, 1, 10])
-def test_safe(safe_step, lbda, n_reps=10, n_iters=100):
-    p = 2
+@pytest.mark.parametrize("n_features", [2, 10])
+def test_safe(safe_step, lbda, n_features, n_reps=10, n_iters=100, tol=1e-6):
+    p = n_features
     shape = (p, p)
     for _ in range(n_reps):
         param = geoopt.ManifoldParameter(
@@ -37,6 +38,7 @@ def test_safe(safe_step, lbda, n_reps=10, n_iters=100):
         param.proj_()
         param.requires_grad = True
         target = torch.randn(*shape)
+        # take large lr so that the safe step always triggers
         optimizer = LandingSGD(
             (param,), lr=1e5, safe_step=safe_step, lambda_regul=lbda
         )
@@ -46,7 +48,7 @@ def test_safe(safe_step, lbda, n_reps=10, n_iters=100):
             loss.backward()
             optimizer.step()
             orth_error = torch.norm(param.t().mm(param) - torch.eye(p))
-            assert orth_error < safe_step
+            assert orth_error < safe_step + tol
 
 
 def test_convergence():
