@@ -28,8 +28,6 @@ class Network(nn.Module):
             torch.randn(n_layers, p, p),
             manifold=geoopt.Stiefel(canonical=False),
         )
-        # with torch.no_grad():
-        #     self.weights.proj_()
         self.biases = torch.nn.Parameter(torch.randn(n_layers, p))
         self.n_layers = n_layers
 
@@ -50,7 +48,7 @@ init_biases = torch.randn(n_layers, p)
 
 method_names = ["Landing", "Retraction"]
 methods = [LandingSGD, RiemannianSGD]
-n_epochs = 100
+n_epochs = 10
 learning_rate = 0.1
 momentum = 0.9
 batch_size = 10

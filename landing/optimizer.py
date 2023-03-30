@@ -58,10 +58,7 @@ def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
     if safe_step:
         d = torch.norm(distance, dim=(-1, -2))
         g = torch.norm(landing_field, dim=(-1, -2))
-        # print(d, g, lambda_regul)
         max_step = _safe_step_size(d, g, lambda_regul, safe_step)
-        print("max", max_step)
-        # print(max_step)
         # One step per orthogonal matrix
         step_size_shape = list(point.shape)
         step_size_shape[-1] = 1
