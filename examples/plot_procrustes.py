@@ -24,8 +24,8 @@ torch.manual_seed(1)
 
 # generate random matrices
 
-n = 100
-p = 40
+n = 200
+p = 100
 A = torch.randn(n, p, p)
 B = torch.randn(n, p, p)
 init_weights = torch.randn(n, p, p)
@@ -44,7 +44,7 @@ learning_rate = 0.3
 
 
 f, axes = plt.subplots(2, 1)
-for method_name, method, n_epochs in zip(method_names, methods, [2000, 500]):
+for method_name, method, n_epochs in zip(method_names, methods, [500, 500]):
     iterates = []
     loss_list = []
     time_list = []
@@ -52,8 +52,6 @@ for method_name, method, n_epochs in zip(method_names, methods, [2000, 500]):
     param = geoopt.ManifoldParameter(
         init_weights.clone(), manifold=geoopt.Stiefel(canonical=False)
     )
-    with torch.no_grad():
-        param.proj_()
     optimizer = method((param,), lr=learning_rate)
     t0 = time()
     for _ in range(n_epochs):
