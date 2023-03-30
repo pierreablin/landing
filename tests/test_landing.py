@@ -12,8 +12,12 @@ torch.manual_seed(1)
 @pytest.mark.parametrize("shape", [(3, 3), (4, 3, 3), (5, 4, 3, 3)])
 @pytest.mark.parametrize("safe_step", [0.3, False])
 def test_forward(shape, momentum, safe_step):
-    param = geoopt.ManifoldParameter(torch.randn(*shape), manifold=geoopt.Stiefel())
-    optimizer = LandingSGD((param,), lr=0.1, momentum=momentum, safe_step=safe_step)
+    param = geoopt.ManifoldParameter(
+        torch.randn(*shape), manifold=geoopt.Stiefel()
+    )
+    optimizer = LandingSGD(
+        (param,), lr=0.1, momentum=momentum, safe_step=safe_step
+    )
     optimizer.zero_grad()
     loss = (param**2).sum()
     loss.backward()
@@ -26,12 +30,16 @@ def test_safe(safe_step, lbda, n_reps=10, n_iters=100):
     p = 2
     shape = (p, p)
     for _ in range(n_reps):
-        param = geoopt.ManifoldParameter(torch.randn(*shape), manifold=geoopt.Stiefel())
+        param = geoopt.ManifoldParameter(
+            torch.randn(*shape), manifold=geoopt.Stiefel()
+        )
         param.requires_grad = False
         param.proj_()
         param.requires_grad = True
         target = torch.randn(*shape)
-        optimizer = LandingSGD((param,), lr=1e5, safe_step=safe_step, lambda_regul=lbda)
+        optimizer = LandingSGD(
+            (param,), lr=1e5, safe_step=safe_step, lambda_regul=lbda
+        )
         for n_iter in range(n_iters):
             optimizer.zero_grad()
             loss = (param * target).sum()
