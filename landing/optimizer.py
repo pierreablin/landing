@@ -40,18 +40,20 @@ def _safe_step_size(d, g, lambda_regul, eps_d):
     sol : float
         The maximal step-size one can take
     """
-    beta = lambda_regul * d * (d - 1)
+    beta = lambda_regul * d * (1 - d)
     alpha = g**2
-    sol = (-beta + torch.sqrt(beta**2 + alpha * (eps_d - d))) / alpha
-    return min(sol, 1.0 / (2 * lambda_regul))
+    sol = (beta + torch.sqrt(beta**2 + alpha * (eps_d - d))) / alpha
+    return torch.minimum(sol, 1.0 / (2.0 * lambda_regul) * torch.ones(1))
 
 
 def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
     *_, p = point.shape
-    distance = torch.matmul(point, point.transpose(-1, -2)) - torch.eye(
+    distance = torch.matmul(point.transpose(-1, -2), point) - torch.eye(
         p, device=point.device
     )
-    landing_field = torch.matmul(grad + lambda_regul * distance, point)
+    landing_field = torch.matmul(grad, point) + lambda_regul * torch.matmul(
+        point, distance
+    )
     if safe_step:
         d = torch.norm(distance, dim=(-1, -2))
         g = torch.norm(landing_field, dim=(-1, -2))

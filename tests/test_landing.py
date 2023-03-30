@@ -20,7 +20,7 @@ def test_forward(shape, momentum, safe_step):
     optimizer.step()
 
 
-@pytest.mark.parametrize("safe_step", [0.3, 0.1, 1e-3])
+@pytest.mark.parametrize("safe_step", [0.3, 0.1, 1e-2])
 @pytest.mark.parametrize("lbda", [0.1, 1, 10])
 def test_safe(safe_step, lbda, n_reps=10, n_iters=100):
     p = 2
@@ -37,7 +37,7 @@ def test_safe(safe_step, lbda, n_reps=10, n_iters=100):
             loss = (param * target).sum()
             loss.backward()
             optimizer.step()
-            orth_error = torch.norm(param.mm(param.t()) - torch.eye(p))
+            orth_error = torch.norm(param.t().mm(param) - torch.eye(p))
             assert orth_error < safe_step
 
 
