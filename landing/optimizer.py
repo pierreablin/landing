@@ -25,40 +25,41 @@ def _check_orthogonal(param):
         )
 
 
-def _safe_step_size(d, a, lbda, eps):
+def _safe_step_size(d, g, lambda_regul, eps_d):
     """Compute the safe step size
-
     Parameters
     ----------
     d : float
         The distance to the manifold
-    a : float
-        The norm of the relative gradient
-    lbda : float
-        The hyper-parameter lambda of the landing algorithm
-    eps : float
+    g : float
+        The norm of the landing update
+    lambda_regul : float
+        The regularisation parameter
+    eps_d : float
         The tolerance: the maximal allowed distance to the manifold
     Return
     ------
     sol : float
         The maximal step-size one can take
     """
-    alpha = 2 * (lbda * d - a * d - 2 * lbda * d)
-    beta = a ** 2 + lbda ** 2 * d ** 3 + 2 * lbda * a * d ** 2 + a ** 2 * d
-    sol = (alpha + torch.sqrt(alpha ** 2 + 4 * beta * (eps - d))) / 2 / beta
-    return sol
+    beta = lambda_regul * d * (1 - d)
+    alpha = g**2
+    sol = (beta + torch.sqrt(beta**2 + alpha * (eps_d - d))) / alpha
+    return torch.minimum(sol, 1.0 / (2.0 * lambda_regul) * torch.ones(1))
 
 
 def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
     *_, p = point.shape
-    distance = torch.matmul(point, point.transpose(-1, -2)) - torch.eye(
+    distance = torch.matmul(point.transpose(-1, -2), point) - torch.eye(
         p, device=point.device
     )
-    landing_field = torch.matmul(grad + lambda_regul * distance, point)
+    landing_field = torch.matmul(grad, point) + lambda_regul * torch.matmul(
+        point, distance
+    )
     if safe_step:
         d = torch.norm(distance, dim=(-1, -2))
-        a = torch.norm(grad, dim=(-1, -2))
-        max_step = _safe_step_size(d, a, lambda_regul, safe_step)
+        g = torch.norm(landing_field, dim=(-1, -2))
+        max_step = _safe_step_size(d, g, lambda_regul, safe_step)
         # One step per orthogonal matrix
         step_size_shape = list(point.shape)
         step_size_shape[-1] = 1
