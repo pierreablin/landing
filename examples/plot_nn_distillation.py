@@ -48,7 +48,7 @@ init_biases = torch.randn(n_layers, p)
 
 method_names = ["Landing", "Retraction"]
 methods = [LandingSGD, RiemannianSGD]
-n_epochs = 100
+n_epochs = 10
 learning_rate = 0.1
 momentum = 0.9
 batch_size = 10
