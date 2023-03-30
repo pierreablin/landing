@@ -34,8 +34,8 @@ def test_safe(safe_step, lbda, n_features, n_reps=10, n_iters=100, tol=1e-6):
         param = geoopt.ManifoldParameter(
             torch.randn(*shape), manifold=geoopt.Stiefel()
         )
-        param.requires_grad = False
-        param.proj_()
+        # param.requires_grad = False
+        # param.proj_()
         param.requires_grad = True
         target = torch.randn(*shape)
         # take large lr so that the safe step always triggers
@@ -43,10 +43,12 @@ def test_safe(safe_step, lbda, n_features, n_reps=10, n_iters=100, tol=1e-6):
             (param,), lr=1e5, safe_step=safe_step, lambda_regul=lbda
         )
         for n_iter in range(n_iters):
+            # print(param)
             optimizer.zero_grad()
             loss = (param * target).sum()
             loss.backward()
             optimizer.step()
+            # print(param)
             orth_error = torch.norm(param.t().mm(param) - torch.eye(p))
             assert orth_error < safe_step + tol
 

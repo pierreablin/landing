@@ -25,7 +25,7 @@ def _check_orthogonal(param):
         )
 
 
-def _safe_step_size(d, g, lambda_regul, eps_d):
+def _safe_step_size(d, g, lambda_regul, eps_d, reg=1e-7):
     """Compute the safe step size
     Parameters
     ----------
@@ -44,22 +44,24 @@ def _safe_step_size(d, g, lambda_regul, eps_d):
     """
     beta = lambda_regul * d * (1 - d)
     alpha = g**2
-    sol = (beta + torch.sqrt(beta**2 + alpha * (eps_d - d))) / alpha
+    tmp1 = torch.maximum(alpha * (eps_d - d), torch.zeros(1))
+    sol = (beta + torch.sqrt(beta**2 + tmp1)) / (alpha + reg)
     return torch.minimum(sol, 1.0 / (2.0 * lambda_regul) * torch.ones(1))
 
 
 def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
     *_, p = point.shape
-    distance = torch.matmul(point.transpose(-1, -2), point) - torch.eye(
+    distance = torch.matmul(point, point.transpose(-1, -2)) - torch.eye(
         p, device=point.device
     )
-    landing_field = torch.matmul(grad, point) + lambda_regul * torch.matmul(
-        point, distance
-    )
+    landing_field = torch.matmul(grad + lambda_regul * distance, point)
     if safe_step:
         d = torch.norm(distance, dim=(-1, -2))
         g = torch.norm(landing_field, dim=(-1, -2))
+        # print(d, g, lambda_regul)
         max_step = _safe_step_size(d, g, lambda_regul, safe_step)
+        print("max", max_step)
+        # print(max_step)
         # One step per orthogonal matrix
         step_size_shape = list(point.shape)
         step_size_shape[-1] = 1
