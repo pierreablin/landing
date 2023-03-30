@@ -50,12 +50,10 @@ def _safe_step_size(d, g, lambda_regul, eps_d):
 
 def _landing_direction(point, grad, lambda_regul, learning_rate, safe_step):
     *_, p = point.shape
-    distance = torch.matmul(point.transpose(-1, -2), point) - torch.eye(
+    distance = torch.matmul(point, point.transpose(-1, -2)) - torch.eye(
         p, device=point.device
     )
-    landing_field = torch.matmul(grad, point) + lambda_regul * torch.matmul(
-        point, distance
-    )
+    landing_field = torch.matmul(grad + lambda_regul * distance, point)
     if safe_step:
         d = torch.norm(distance, dim=(-1, -2))
         g = torch.norm(landing_field, dim=(-1, -2))
