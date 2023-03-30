@@ -28,8 +28,8 @@ class Network(nn.Module):
             torch.randn(n_layers, p, p),
             manifold=geoopt.Stiefel(canonical=False),
         )
-        with torch.no_grad():
-            self.weights.proj_()
+        # with torch.no_grad():
+        #     self.weights.proj_()
         self.biases = torch.nn.Parameter(torch.randn(n_layers, p))
         self.n_layers = n_layers
 
